@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BALLOON POP – PECAHKAN BALON PINTAR</title>
+<style>
+:root{--ink:#17365d;--blue:#35aee8;--yellow:#ffd45e;--pink:#ff729d;--green:#35c99a}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Trebuchet MS",Arial,sans-serif;color:var(--ink);background:linear-gradient(180deg,#79d9ff 0%,#d9f6ff 68%,#a9e6f5 100%);min-height:100vh}
+button,input{font:inherit}
+button{border:0;border-radius:15px;padding:11px 17px;font-weight:900;color:#17365d;background:var(--yellow);box-shadow:0 4px 0 #dcae3f;cursor:pointer}
+button:active{transform:translateY(3px);box-shadow:0 1px 0 #dcae3f}
+button.secondary{background:#e7f7ff;box-shadow:0 4px 0 #b8dce9}
+button:disabled{opacity:.55;cursor:not-allowed}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px clamp(12px,3vw,30px);flex-wrap:wrap}
+.logo{font-size:clamp(20px,3vw,30px);font-weight:1000;text-shadow:0 2px white}
+.logo span{color:#ff5e83}
+.navstats{display:flex;gap:8px;flex-wrap:wrap}
+.stat{background:#fff;border:2px solid #d7f4ff;border-radius:999px;padding:8px 13px;font-weight:900;box-shadow:0 3px 0 #b4e2f1}
+main{width:min(1100px,96vw);margin:0 auto 28px}
+.topline{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:3px 2px 10px}
+.identity{font-weight:900;background:#ffffffd9;border-radius:14px;padding:8px 13px}
+.progress-wrap{height:13px;background:#ffffffb8;border-radius:99px;overflow:hidden;flex:1;min-width:130px;border:2px solid white}
+#progress{height:100%;width:0;background:linear-gradient(90deg,#43d6a2,#ffe16a);border-radius:99px;transition:width .35s}
+.stage{position:relative;border:6px solid white;border-radius:26px;overflow:hidden;background:#86ddff;box-shadow:0 12px 28px #3279a455}
+canvas{display:block;width:100%;height:auto;aspect-ratio:16/9;touch-action:none;cursor:crosshair}
+.questionbar{position:absolute;left:50%;top:14px;transform:translateX(-50%);width:min(88%,760px);background:#ffffffed;border:3px solid #fff;border-radius:19px;text-align:center;padding:10px 15px;box-shadow:0 5px 0 #b3e5f4;pointer-events:none}
+.qmeta{font-size:12px;font-weight:1000;letter-spacing:1px;color:#2589b7}
+#question{font-size:clamp(17px,2.5vw,25px);font-weight:1000;margin:4px 0 0;line-height:1.2}
+#feedback{position:absolute;bottom:13px;left:50%;transform:translateX(-50%);background:#fff;border:3px solid white;border-radius:16px;padding:8px 15px;font-weight:900;text-align:center;min-width:min(90%,330px);box-shadow:0 4px 0 #a9dbea;pointer-events:none}
+#timer{color:#e85d75}
+.controls{display:flex;gap:9px;flex-wrap:wrap;align-items:center;justify-content:center;margin:13px 0}
+.hint{background:#ffffffdc;border:2px solid white;border-radius:17px;padding:12px 15px;line-height:1.45;font-size:14px}
+.bottom{display:grid;grid-template-columns:1.15fr 1fr;gap:12px}
+.panel{background:#ffffffed;border:2px solid white;border-radius:18px;padding:13px 16px;box-shadow:0 4px 0 #b9e4f0}
+.panel h3{margin:0 0 6px;font-size:16px}.panel p{margin:4px 0;font-size:14px;line-height:1.4}
+.overlay{position:absolute;inset:0;background:#12365e9c;backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:15px;z-index:5}
+.dialog{width:min(560px,96%);background:white;border:5px solid #ffe18a;border-radius:25px;padding:clamp(18px,4vw,29px);text-align:center;box-shadow:0 10px 0 #194a71}
+.dialog h1{font-size:clamp(24px,4vw,36px);margin:4px 0 8px}.dialog p{line-height:1.45;margin:8px 0 16px}
+.dialog .emoji{font-size:52px}
+.nameinput{width:min(100%,340px);padding:12px;border:2px solid #b9e6f4;border-radius:12px;font-size:17px;outline:none;margin:4px 0 12px}
+.dialog-actions{display:flex;justify-content:center;gap:9px;flex-wrap:wrap}
+#cameraStatus{font-size:13px;font-weight:800;color:#267ba6;margin-top:10px}
+#video{position:absolute;width:2px;height:2px;opacity:0;pointer-events:none}
+@media(max-width:650px){.bottom{grid-template-columns:1fr}.navstats{justify-content:center}.logo{width:100%;text-align:center}.questionbar{top:8px;padding:7px 10px}#feedback{bottom:7px;padding:6px 10px;font-size:13px}}
+</style>
+</head>
+<body>
+<header>
+ <div class="logo">🎈 BALLOON <span>POP</span></div>
+ <div class="navstats">
+  <div class="stat">👩‍🎓 <span id="studentNav">Pilot Cilik</span></div>
+  <div class="stat">⭐ Skor: <span id="score">0</span></div>
+  <div class="stat">⏱️ <span id="timer">30</span> dtk</div>
+ </div>
+</header>
+<main>
+ <div class="topline">
+  <div class="identity">🌟 Level <span id="level">1</span>/5 · Soal <span id="qnum">1</span>/3</div>
+  <div class="progress-wrap"><div id="progress"></div></div>
+  <div class="identity">🏆 <span id="totalScore">0</span> poin</div>
+ </div>
+ <section class="stage">
+  <canvas id="game" width="960" height="540" aria-label="Area permainan balon pintar"></canvas>
+  <div class="questionbar"><div class="qmeta" id="category">LEVEL 1 · LOTS</div><div id="question">Bersiap untuk bermain!</div></div>
+  <div id="feedback">Pilih balon dengan jawaban yang benar!</div>
+  <video id="video" autoplay playsinline></video>
+  <div class="overlay" id="startOverlay">
+   <div class="dialog">
+    <div class="emoji">🎈☁️🌈</div>
+    <h1>BALLOON POP</h1>
+    <h2 style="margin:0;color:#ef6689">PECAHKAN BALON PINTAR!</h2>
+    <p>Matematika · Pecahan · Kelas 4 SD<br>5 level seru, masing-masing 3 tantangan LOTS, MOTS, dan HOTS.</p>
+    <input id="studentName" class="nameinput" maxlength="24" placeholder="Tulis nama siswa..." aria-label="Nama siswa">
+    <div class="dialog-actions"><button id="playBtn">MULAI BERMAIN 🚀</button><button class="secondary" id="cameraBtn">Aktifkan Gesture ✋</button></div>
+    <div id="cameraStatus">Kamera belum aktif. Kamu tetap bisa bermain dengan mouse atau sentuhan.</div>
+   </div>
+  </div>
+  <div class="overlay" id="endOverlay" style="display:none">
+   <div class="dialog">
+    <div class="emoji" id="endEmoji">🏆</div>
+    <h1 id="endTitle">Hebat Sekali!</h1>
+    <p id="endMessage">Kamu telah menyelesaikan permainan.</p>
+    <p style="font-size:20px;font-weight:1000">⭐ Skor akhir: <span id="finalScore">0</span></p>
+    <div class="dialog-actions"><button id="replayBtn">MAIN LAGI 🔁</button></div>
+   </div>
+  </div>
+ </section>
+ <div class="controls">
+  <button class="secondary" id="soundBtn">🔊 Suara: ON</button>
+  <button class="secondary" id="gestureBtn">✋ Gesture: OFF</button>
+  <button class="secondary" id="pauseBtn">⏸ Jeda</button>
+ </div>
+ <div class="bottom">
+  <div class="panel"><h3>🎯 Cara Bermain</h3><p>1. Baca pertanyaan di bagian atas.</p><p>2. Arahkan penunjuk ke balon jawaban.</p><p>3. Cubit jari (temukan ujung ibu jari dan telunjuk), klik, atau sentuh balon untuk memecahkannya.</p></div>
+  <div class="panel"><h3>💡 Panduan Belajar</h3><p>LOTS: mengingat dan mengenali pecahan.</p><p>MOTS: menerapkan konsep pecahan.</p><p>HOTS: menalar dan memecahkan masalah.</p></div>
+ </div>
+</main>
+<script type="module">
+import { FilesetResolver, HandLandmarker } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
+
+const $=s=>document.querySelector(s), canvas=$('#game'),ctx=canvas.getContext('2d'),video=$('#video');
+const W=960,H=540;
+const bank=[
+ {cat:'LOTS',q:'Pecahan yang menunjukkan satu dari dua bagian sama besar adalah ...',a:['1/2','1/3','2/3','1/4'],c:0,why:'1/2 berarti satu bagian dari dua bagian yang sama besar.'},
+ {cat:'MOTS',q:'Ibu memotong kue menjadi 4 bagian sama besar. Dita makan 1 bagian. Bagian yang dimakan Dita adalah ...',a:['1/2','1/4','3/4','2/4'],c:1,why:'Satu dari empat bagian ditulis 1/4.'},
+ {cat:'HOTS',q:'Rani memiliki 1/2 pizza. Beni memiliki 2/4 pizza. Siapa yang memiliki pizza lebih banyak?',a:['Rani','Beni','Sama banyak','Tidak dapat dibandingkan'],c:2,why:'1/2 senilai dengan 2/4, jadi jumlahnya sama.'},
+ {cat:'LOTS',q:'Pada pecahan 3/5, angka 3 disebut ...',a:['Penyebut','Pembilang','Hasil bagi','Bilangan bulat'],c:1,why:'Angka di atas garis pecahan disebut pembilang.'},
+ {cat:'MOTS',q:'Pecahan senilai dengan 1/2 adalah ...',a:['2/3','2/4','1/4','3/5'],c:1,why:'1/2 dikalikan 2/2 menjadi 2/4.'},
+ {cat:'HOTS',q:'Ada 8 potong semangka sama besar. 4 potong dimakan. Pecahan yang dimakan dan bentuk paling sederhananya adalah ...',a:['4/8 = 1/2','4/8 = 1/4','3/8 = 1/2','8/4 = 2'],c:0,why:'Empat dari delapan adalah 4/8. Sederhanakan dengan membagi 4, hasilnya 1/2.'},
+ {cat:'LOTS',q:'Manakah pecahan yang paling kecil?',a:['1/2','1/4','3/4','2/4'],c:1,why:'Di antara pilihan ini, 1/4 nilainya paling kecil.'},
+ {cat:'MOTS',q:'Ayah membagi 1 batang cokelat menjadi 6 bagian. Adik mendapat 3 bagian. Pecahan cokelat adik adalah ...',a:['3/6','1/6','6/3','2/6'],c:0,why:'Adik mendapat 3 dari 6 bagian, yaitu 3/6.'},
+ {cat:'HOTS',q:'Dua anak mendapat bagian semangka. Sita mendapat 2/6 dan Tono 1/3. Kesimpulan yang tepat adalah ...',a:['Sita lebih banyak','Tono lebih banyak','Sama banyak','Keduanya tidak punya'],c:2,why:'2/6 disederhanakan dengan membagi 2 menjadi 1/3.'},
+ {cat:'LOTS',q:'Tanda yang tepat untuk 1/2 ... 1/4 adalah ...',a:['<','>','= ','+'],c:1,why:'Setengah lebih besar daripada seperempat.'},
+ {cat:'MOTS',q:'Bentuk sederhana dari 2/8 adalah ...',a:['1/2','1/4','2/4','1/8'],c:1,why:'Pembilang dan penyebut dibagi 2, menjadi 1/4.'},
+ {cat:'HOTS',q:'Lina membaca 3/8 buku pada pagi hari dan 2/8 pada sore hari. Berapa bagian buku yang sudah dibaca?',a:['1/8','5/8','6/8','5/16'],c:1,why:'Penyebut sama, jumlahkan pembilang: 3/8 + 2/8 = 5/8.'},
+ {cat:'LOTS',q:'Pecahan 4/4 sama nilainya dengan ...',a:['0','1/2','1 utuh','1/4'],c:2,why:'Empat dari empat bagian berarti satu utuh.'},
+ {cat:'MOTS',q:'Pita 1 meter dipotong menjadi 5 bagian sama panjang. Panjang 2 potong pita adalah ...',a:['2/5 meter','1/5 meter','3/5 meter','5/2 meter'],c:0,why:'Dua dari lima bagian sama panjang adalah 2/5 meter.'},
+ {cat:'HOTS',q:'Kelas A menghabiskan 3/6 loyang kue. Kelas B menghabiskan 1/2 loyang. Pernyataan yang benar adalah ...',a:['Kelas A lebih banyak','Kelas B lebih banyak','Jumlahnya sama','Keduanya 1 loyang'],c:2,why:'3/6 disederhanakan menjadi 1/2, jadi jumlahnya sama.'}
+];
+let order=Array.from({length:15},(_,i)=>i),idx=0,score=0,lives=3,timeLeft=30,timerId=null,active=false,paused=false,sound=true,student='Pilot Cilik',balloons=[],particles=[],pointer={x:480,y:330,down:false},handOn=false,handLandmarker=null,stream=null,lastPinch=false,lastFrame=0,questionLocked=false,toastUntil=0;
+const colors=['#ff6384','#ffbf47','#54cfa7','#6bafff','#b78bff','#ff8b55'];
+function shuffle(a){return a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1])}
+function rounded(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r)}
+function soundFX(freq=600,dur=.1,type='sine'){if(!sound)return;try{let ac=soundFX.ac||(soundFX.ac=new(window.AudioContext||window.webkitAudioContext)());let o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(.08,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+dur);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+dur)}catch(e){}}
+function cloud(x,y,s){ctx.save();ctx.translate(x,y);ctx.scale(s,s);ctx.fillStyle='#ffffffd9';ctx.beginPath();ctx.arc(-28,8,23,0,Math.PI*2);ctx.arc(0,-3,30,0,Math.PI*2);ctx.arc(30,9,21,0,Math.PI*2);ctx.arc(4,15,34,0,Math.PI*2);ctx.fill();ctx.restore()}
+function background(t){let g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#64cafa');g.addColorStop(.7,'#c6f1ff');g.addColorStop(1,'#e7fbff');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);cloud(110+(t*.012%1100),120,1.1);cloud(650-(t*.009%1100),185,.8);cloud(900-(t*.014%1100),85,.65);cloud(330+(t*.007%1100),245,.55);
+ // distant rolling hills
+ ctx.fillStyle='#9de5c5';ctx.beginPath();ctx.moveTo(0,470);ctx.quadraticCurveTo(210,390,420,475);ctx.quadraticCurveTo(680,380,960,465);ctx.lineTo(960,540);ctx.lineTo(0,540);ctx.fill();
+}
+function makeBalloons(){let q=bank[order[idx]],opts=shuffle(q.a.map((a,i)=>({text:a,correct:i===q.c})));balloons=opts.map((o,i)=>({ ...o,x:160+i*215,y:325+(Math.random()-.5)*35,base:310+(Math.random()-.5)*40,phase:Math.random()*6.28,scale:.92+Math.random()*.13,color:colors[i%colors.length],popped:false,wrong:false}));}
+function updateUI(){let q=Math.min(idx,14),lev=Math.floor(q/3)+1,n=q%3+1;$('#studentNav').textContent=student;$('#score').textContent=score;$('#totalScore').textContent=score;$('#level').textContent=Math.min(lev,5);$('#qnum').textContent=n;$('#progress').style.width=(q/15*100)+'%';}
+function showQuestion(){if(idx>=15){finish();return}let q=bank[order[idx]];$('#category').textContent=`LEVEL ${Math.floor(idx/3)+1} · ${q.cat}`;$('#question').textContent=q.q;$('#feedback').textContent='🎯 Arahkan penunjuk, lalu cubit / klik balon!';timeLeft=30;$('#timer').textContent=timeLeft;questionLocked=false;makeBalloons();updateUI();clearInterval(timerId);timerId=setInterval(()=>{if(!active||paused||questionLocked)return;timeLeft--;$('#timer').textContent=timeLeft;if(timeLeft<=0){clearInterval(timerId);questionLocked=true;$('#feedback').textContent='⏰ Waktu habis! Jawaban: '+q.a[q.c];soundFX(180,.25,'triangle');setTimeout(nextQuestion,1450)}},1000);}
+function burst(b,good){b.popped=true;for(let i=0;i<30;i++){let a=Math.random()*Math.PI*2,v=1+Math.random()*5;particles.push({x:b.x,y:b.y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:1,color:good?b.color:'#fff'});}if(good){score+=bank[order[idx]].cat==='LOTS'?10:bank[order[idx]].cat==='MOTS'?15:20;$('#feedback').textContent='🎉 BENAR! '+bank[order[idx]].why;soundFX(780,.12);setTimeout(()=>soundFX(980,.15),100);questionLocked=true;clearInterval(timerId);setTimeout(nextQuestion,1550)}else{b.wrong=true;$('#feedback').textContent='🙈 Belum tepat. Coba balon yang lain!';soundFX(220,.16,'sawtooth');setTimeout(()=>{b.wrong=false},650)}updateUI();}
+function nextQuestion(){if(!active)return;idx++;if(idx>=15)finish();else showQuestion();}
+function finish(){active=false;clearInterval(timerId);$('#progress').style.width='100%';$('#endOverlay').style.display='flex';$('#finalScore').textContent=score;let msg=score>=200?'Luar biasa! Kamu ahli pecahan!':score>=150?'Hebat! Terus asah kemampuan berhitungmu.':'Bagus! Terus berlatih, kamu pasti makin pintar!';$('#endMessage').textContent=`${student}, kamu menyelesaikan 5 level dan 15 tantangan. ${msg}`;$('#endEmoji').textContent=score>=200?'🏆🌈':'🎖️🎈';soundFX(900,.3);updateUI();}
+function popAt(x,y){if(!active||paused||questionLocked)return;let b=balloons.find(b=>!b.popped&&Math.hypot((x-b.x)/1.05,(y-b.y)/1.1)<65);if(b)burst(b,b.correct)}
+function drawBalloon(b,t){if(b.popped)return;let bob=Math.sin(t*.002+b.phase)*17;b.y=b.base+bob;ctx.save();ctx.translate(b.x,b.y);ctx.scale(b.scale,b.scale);
+ // shadow
+ ctx.fillStyle='#3b91b455';ctx.beginPath();ctx.ellipse(7,60,40,9,0,0,Math.PI*2);ctx.fill();
+ // string
+ ctx.strokeStyle='#527b9a';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,49);ctx.quadraticCurveTo(10,68,-3,88);ctx.stroke();
+ // balloon body
+ let grad=ctx.createRadialGradient(-17,-22,4,0,0,60);grad.addColorStop(0,'#ffffff');grad.addColorStop(.16,b.color);grad.addColorStop(1,shade(b.color));ctx.fillStyle=grad;
+ ctx.beginPath();ctx.moveTo(0,49);ctx.bezierCurveTo(-45,27,-58,-8,-44,-34);ctx.bezierCurveTo(-28,-67,28,-67,44,-34);ctx.bezierCurveTo(58,-8,45,27,0,49);ctx.fill();
+ ctx.fillStyle=shade(b.color);ctx.beginPath();ctx.moveTo(-7,48);ctx.lineTo(7,48);ctx.lineTo(0,59);ctx.closePath();ctx.fill();
+ // shine
+ ctx.fillStyle='#ffffff99';ctx.beginPath();ctx.ellipse(-22,-26,7,17,-.4,0,Math.PI*2);ctx.fill();
+ if(b.wrong){ctx.strokeStyle='#fff';ctx.lineWidth=7;ctx.beginPath();ctx.arc(0,0,60,0,Math.PI*2);ctx.stroke()}
+ ctx.fillStyle='#17365d';ctx.font='bold 25px "Trebuchet MS",Arial';ctx.textAlign='center';ctx.textBaseline='middle';let txt=b.text;if(txt.length>15)ctx.font='bold 17px Arial';ctx.fillText(txt,0,0,105);
+ ctx.restore();}
+function shade(hex){let n=parseInt(hex.slice(1),16),r=Math.max(0,(n>>16)-35),g=Math.max(0,((n>>8)&255)-35),b=Math.max(0,(n&255)-35);return `rgb(${r},${g},${b})`}
+function draw(t){background(t);balloons.forEach(b=>drawBalloon(b,t));particles=particles.filter(p=>p.life>0);particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.08;p.life-=.025;ctx.globalAlpha=p.life;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1});
+ // pointer ring
+ ctx.save();ctx.strokeStyle=handOn?'#ff3d79':'#fff';ctx.lineWidth=4;ctx.beginPath();ctx.arc(pointer.x,pointer.y,15,0,Math.PI*2);ctx.stroke();ctx.fillStyle='#17365d';ctx.beginPath();ctx.arc(pointer.x,pointer.y,4,0,Math.PI*2);ctx.fill();ctx.restore();
+ if(paused){ctx.fillStyle='#16365c99';ctx.fillRect(0,0,W,H);ctx.fillStyle='white';ctx.font='bold 48px Arial';ctx.textAlign='center';ctx.fillText('JEDA SEBENTAR',W/2,H/2)}
+}
+function frame(t){if(!lastFrame)lastFrame=t;lastFrame=t;draw(t);requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+function startGame(){student=$('#studentName').value.trim()||'Pilot Cilik';idx=0;score=0;active=true;paused=false;$('#studentNav').textContent=student;$('#startOverlay').style.display='none';$('#endOverlay').style.display='none';$('#pauseBtn').textContent='⏸ Jeda';showQuestion();}
+function restart(){startGame()}
+canvas.addEventListener('pointermove',e=>{let r=canvas.getBoundingClientRect();pointer.x=(e.clientX-r.left)/r.width*W;pointer.y=(e.clientY-r.top)/r.height*H});
+canvas.addEventListener('pointerdown',e=>{let r=canvas.getBoundingClientRect();popAt((e.clientX-r.left)/r.width*W,(e.clientY-r.top)/r.height*H)});
+$('#playBtn').onclick=startGame;$('#replayBtn').onclick=restart;
+$('#soundBtn').onclick=()=>{sound=!sound;$('#soundBtn').textContent=sound?'🔊 Suara: ON':'🔇 Suara: OFF';if(sound)soundFX(650,.1)};
+$('#pauseBtn').onclick=()=>{if(!active)return;paused=!paused;$('#pauseBtn').textContent=paused?'▶ Lanjut':'⏸ Jeda';$('#feedback').textContent=paused?'Permainan dijeda.':'Ayo lanjutkan!';};
+async function enableGesture(){
+ const status=$('#cameraStatus');try{
+  status.textContent='Meminta izin kamera...';
+  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:640,height:480},audio:false});video.srcObject=stream;await video.play();
+  const vision=await FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm');
+  handLandmarker=await HandLandmarker.createFromOptions(vision,{baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',delegate:'CPU'},runningMode:'VIDEO',numHands:1});
+  handOn=true;$('#gestureBtn').textContent='✋ Gesture: ON';status.textContent='Gesture aktif! Dekatkan ujung ibu jari dan telunjuk untuk pinch balon.';
+  track();
+ }catch(err){status.textContent='Kamera gagal diaktifkan. Periksa izin kamera, atau gunakan mouse/sentuhan.';console.error(err)}
+}
+let lastVideo=-1;
+function track(){if(!handOn||!handLandmarker)return;if(video.currentTime!==lastVideo){lastVideo=video.currentTime;let res=handLandmarker.detectForVideo(video,performance.now());if(res.landmarks?.length){let lm=res.landmarks[0],tip=lm[8],thumb=lm[4];pointer.x=(1-tip.x)*W;pointer.y=tip.y*H;let d=Math.hypot(tip.x-thumb.x,tip.y-thumb.y);let pinch=d<.055;if(pinch&&!lastPinch)popAt(pointer.x,pointer.y);lastPinch=pinch;}}requestAnimationFrame(track)}
+$('#cameraBtn').onclick=enableGesture;$('#gestureBtn').onclick=()=>{if(!handOn)enableGesture();else{handOn=false;$('#gestureBtn').textContent='✋ Gesture: OFF';$('#cameraStatus').textContent='Gesture dimatikan. Kamera tidak digunakan.';if(stream)stream.getTracks().forEach(t=>t.stop());video.srcObject=null;stream=null;handLandmarker=null;}};
+updateUI();
+</script>
+</body>
+</html>
